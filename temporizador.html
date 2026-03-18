@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" sizes="32x32" href="icone-temporizador.png" type="image/x-icon">
+    <title>Temporizador</title>
+</head>
+
+<!-- CSS -->
+<style>
+    /*toda pagina*/
+    *{
+        margin: 0px;
+    }
+    /*fundo*/
+    body{
+        background-color: rgb(9, 2, 51);
+        height: 100vh;
+        margin: 0;
+    }
+    nav{
+        background-color: rgb(166, 131, 230);
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    nav img{
+        width:70px;
+        height:40px;
+        border: 4px solid rgb(255, 255, 255);
+        border-radius: 10px;
+    }
+    nav h1{
+        color: rgb(10, 19, 27);
+        font-family:'Franklin Gothic Medium';
+        padding-left: 10px;
+    }
+
+    .conteiner_1{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 150px;
+    }
+    /*temporizador*/
+    .temporizador{
+        background-color: rgb(199, 210, 245);
+        padding: 20px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 10px 10px 0 0 rgba(88, 76, 197, 0.527);
+    }
+    .temporizador h2{
+        font-size: 40px;
+        font-family: sans-serif;
+    }
+    .temporizador p{
+        margin-top: 10px;
+        font-size: 60px;
+        font-family: monospace;
+    }
+    .temporizador button{
+        border: none;
+        background-color: rgb(164, 129, 219);
+        padding: 10px;
+        border-radius: 10px;
+        margin-top: 10px;
+        margin-left: 5px;
+        margin-right: 20px;
+        transition: 0.1s ease-in-out;
+        font-size: 30px;
+        box-shadow: 5px 5px 0 0 rgba(9, 2, 48, 0.212);
+        font-family: sans-serif;
+    }
+    .temporizador button:hover{
+        background-color: rgb(116, 115, 185);
+        padding: 11px;
+        font-size: 31px;
+        transition: 0.1s ease-in-out;
+        color: aliceblue;
+    }
+    .temporizador button:active{
+        padding: 9px;
+        font-size: 29px;
+        transition: 0.02s ease-in-out;
+        background-color: rgb(185, 158, 229);
+        color:beige;
+    }
+    #tempo{
+        font-family: monospace;
+        outline: 0;
+        font-size: 40px;
+        border: none;
+        background: rgba(2, 4, 29, 0.171);
+        border-radius: 7px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.322);
+        width: 80px;
+        text-align: center;
+        margin-bottom: 10px;
+        margin-top: 10px;
+    }
+    #resetar_finalizado{
+        width: 200px;
+        margin: 0;
+        font-size: 40px;
+        background-color: rgb(172, 5, 69);
+        padding: 10px;
+
+    }
+    #resetar_finalizado:hover{
+        width: 210px;
+        margin: 0;
+        font-size: 41px;
+        background-color: rgb(226, 54, 106);
+        padding: 11px;
+
+    }
+    #resetar_finalizado:active{
+        width: 190px;
+        margin: 0;
+        font-size: 39px;
+        background-color: rgb(238, 174, 201);
+        padding: 9px;
+
+    }
+    #passou{
+        font-size: 30px;
+        color: rgba(0, 0, 255, 0.685);
+    }
+    footer{
+        position: fixed;
+        background-color: rgb(87, 23, 146);
+        bottom: 0;
+        width: 100%;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: aliceblue;
+    }
+    footer h2{
+        font-family:Verdana, Geneva, Tahoma, sans-serif;
+    }
+</style>
+
+<!-- HTML -->
+<body>
+    <nav>
+        <img src="icone-temporizador_grande.png" alt="icone">
+        <h1>Temporizador</h1>
+    </nav>
+    <div class="conteiner_1">
+
+        <div class="temporizador">
+            <h2>Temporizador</h2>
+            <p id="temporizador"></p>
+            <p id="passou">+00:00</p>
+            <button id="iniciar">iniciar</button>
+            <button id="resetar">resetar</button>
+            
+        </div>
+    </div>
+    <footer>
+        <h2>Portfolio - Refifih</h2>
+    </footer>
+</body>
+
+<!-- JS -->
+<script>
+    //variaveis
+    const temporizador = document.getElementById("temporizador");
+    const iniciar = document.getElementById("iniciar");
+    const resetar = document.getElementById("resetar");
+    const passou = document.getElementById("passou");
+
+    const audio = new Audio("alarme.mp3");
+
+    let minutos_tmp=0, segundos_tmp=0, duracao = 5*60;
+    let tempo_restante = duracao, tempo_passado = 0;
+    let intervalo = null, intervalo_p = null;
+    let editando_tempo = false, rodando = false, finalizado = false;
+
+    //vai atualizar a tela
+    const atualizar_tela = ()=>{
+        const minutos = Math.floor(tempo_restante/60), segundos = tempo_restante%60;
+        temporizador.textContent = `${minutos.toString().padStart(2,"0")}:${segundos.toString().padStart(2,"0")}`;
+    };
+
+    //vai atualizar o tempo passado
+    function atualizar_tempo_passado(){
+        const minutos = Math.floor(tempo_passado/60), segundos = tempo_passado%60;
+        passou.textContent = `+${minutos.toString().padStart(2,"0")}:${segundos.toString().padStart(2,"0")}`;
+    }
+    
+    passou.style.display = "none";
+    iniciar.style.padding = "15px";
+    iniciar.style.fontSize = "50px";
+    resetar.style.display = "none";
+    atualizar_tela();
+
+    //vai mudar o temporizador que é um paragrafo em uma entrada de texto numerico
+    const mudar_temporizador_inserir_valor = ()=>{
+        if(editando_tempo && !rodando) return;
+        if(!rodando){
+            const minutos = Math.floor(tempo_restante / 60);
+            const segundos = tempo_restante % 60;
+                    
+            const inputMin = document.createElement("input");
+            const inputSeg = document.createElement("input");
+                    
+            inputMin.type = "text";
+            inputMin.inputMode = "numeric";
+            inputMin.value = minutos;
+            inputMin.id = "tempo";
+                    
+            inputSeg.type = "text";
+            inputSeg.inputMode = "numeric";
+            inputSeg.value = segundos;
+            inputSeg.id = "tempo";
+                    
+            temporizador.innerHTML = "";
+                    
+            temporizador.appendChild(inputMin);
+            temporizador.appendChild(document.createTextNode(":"));
+            temporizador.appendChild(inputSeg);
+                    
+            inputMin.addEventListener("input", (event)=>{
+                minutos_tmp = Math.floor(Number(event.target.value)*60);
+            });
+
+            inputSeg.addEventListener("input", (event)=>{
+                segundos_tmp = Math.floor(Number(event.target.value));
+            });
+            
+            inputMin.addEventListener("blur", ()=>{
+                duracao = segundos_tmp+minutos_tmp;
+                tempo_restante = duracao;
+                atualizar_tela();
+                editando_tempo = false;
+            });
+            
+            inputSeg.addEventListener("blur", ()=>{
+                duracao = segundos_tmp+minutos_tmp;
+                tempo_restante = duracao;
+                atualizar_tela();
+                editando_tempo = false;
+            });
+            editando_tempo = true;
+        }
+    };
+    
+    //vai inicializar o contador do temporizador passou
+    const iniciar_temporizador_passou = () =>{
+        tempo_passado = 0;
+        atualizar_tempo_passado();
+        intervalo_p = setInterval(()=>{
+            if(finalizado){
+                tempo_passado++;
+                atualizar_tempo_passado();
+            }else{
+                clearInterval(intervalo_p);
+            }
+        }, 1000);
+    }
+
+    //vai inicializar o contador do temporizador
+    const iniciar_temporizador = ()=>{
+        if(intervalo && rodando)return;
+        rodando = true;finalizado =false;
+        resetar.style.display = "";
+        audio.pause();
+        iniciar.style.padding = "";
+        iniciar.style.fontSize = "";
+        iniciar.innerText = "parar";
+        intervalo = setInterval(()=>{
+            if(tempo_restante>0){
+                tempo_restante --;
+                atualizar_tela();
+            }else{
+                clearInterval(intervalo);
+                audio.loop = true;
+                finalizado = true;
+                audio.play();
+                iniciar.style.display = "none";
+                resetar.id = "resetar_finalizado";
+                passou.style.display = "";
+                iniciar_temporizador_passou();
+            }
+        }, 
+        1000);
+    };
+    
+
+    //parar contador do temporizador
+    const parar_temporizador = ()=>{
+        rodando = false;
+        finalizado = false;
+        iniciar.innerText = "reiniciar";
+        clearInterval(intervalo);
+        audio.pause();
+    };
+
+    const resetar_temporizador = ()=>{
+        rodando = false;
+        tempo_restante = duracao;
+        clearInterval(intervalo);
+        clearInterval(intervalo_p);
+        audio.pause();
+        iniciar.innerText = "iniciar";
+        resetar.style.display = "none";
+        iniciar.style.padding = "15px";
+        iniciar.style.fontSize = "50px";
+        atualizar_tela();
+        if(finalizado){
+            resetar.id = "";
+            passou.style.display = "none";
+            iniciar.style.display = "";
+            tempo_passado = 0;
+            finalizado = false;
+        }
+    };
+
+    addEventListener("keydown",(event)=>{
+        if(event.key === "Enter")iniciar_temporizador();
+        if(event.key === "Espace")parar_temporizador();
+    });
+
+    temporizador.addEventListener("click", ()=>{
+        mudar_temporizador_inserir_valor();
+    });
+    
+    iniciar.addEventListener("click", ()=>{
+        rodando?parar_temporizador(): iniciar_temporizador();
+    });
+    
+    resetar.addEventListener("click", ()=>{
+        resetar_temporizador();
+    });
+</script>
+</html>
